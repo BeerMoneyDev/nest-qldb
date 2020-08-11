@@ -20,7 +20,7 @@ export class NestQldbModule {
   }
 
   static forRootAsync(moduleOptions: {
-    qldbDriver: AsyncProvider<QldbDriver>;
+    qldbDriver: AsyncProvider<QldbDriver | Promise<QldbDriver>>;
     createTablesAndIndexes: boolean;
   }): DynamicModule {
     const module: DynamicModule = {
@@ -50,7 +50,7 @@ export class NestQldbModule {
       }
     };
 
-    addAsyncProvider<QldbDriver>(
+    addAsyncProvider<QldbDriver | Promise<QldbDriver>>(
       QLDB_DRIVER_TOKEN,
       moduleOptions.qldbDriver,
       true,
