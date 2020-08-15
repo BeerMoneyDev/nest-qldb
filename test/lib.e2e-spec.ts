@@ -5,6 +5,7 @@ import {
   Repository,
   InjectRepository,
   QldbDriver,
+  QldbQueryService,
 } from '../src';
 import { NestFactory } from '@nestjs/core';
 import { SharedIniFileCredentials } from 'aws-sdk';
@@ -20,6 +21,11 @@ class User {
   gender: string;
   sex: 'M' | 'F';
   luckyNumber: number;
+  groups: { name: string }[] = [];
+
+  constructor(partial: Partial<User>) {
+    Object.assign(this, partial);
+  }
 }
 
 @Injectable()
@@ -58,16 +64,33 @@ describe('NestQldbModule.forRoot()', () => {
     const userService = module.get(UserService);
     const name = 'Billy Madison';
     const luckyNumber = 69;
-    const user: User = {
+    const user = new User({
       dob: new Date('1980/07/19'),
       name,
       gender: 'man',
       sex: 'M',
       luckyNumber,
-    };
+      groups: [{ name: 'best_golfers_ever' }],
+    });
+
+    // create
     const created = await userService.usersRepository.create(user);
     expect(created.name).toStrictEqual(name);
 
+    // custom query
+    const queryService = module.get(QldbQueryService);
+    const result = await queryService.query<User>(
+      `
+      SELECT a.*
+      FROM app_users AS a, 
+          a.groups AS m
+      WHERE m.name = ?
+    `,
+      'best_golfers_ever',
+    );
+    expect(result.find(r => r.name === 'Billy Madison')).toBeDefined();
+
+    // retrieve
     const get = await userService.usersRepository.retrieve(created.id);
     expect(get.name).toStrictEqual(name);
     expect(get.id).toStrictEqual(created.id);
@@ -76,13 +99,17 @@ describe('NestQldbModule.forRoot()', () => {
       filter: { name: { operator: '=', value: name } },
     });
     expect(queryResult.some(x => x.luckyNumber === luckyNumber)).toBeTruthy();
+
+    // updates
     user.luckyNumber = 68;
     await userService.usersRepository.replace(created.id, user);
     const updated = await userService.usersRepository.retrieve(created.id);
     expect(updated.luckyNumber).toEqual(68);
 
+    // deletes
     await userService.usersRepository.destroy(created.id);
 
+    // history
     const history = await userService.usersRepository.history(created.id);
     expect(history.length).toBe(3);
     expect(history[0].luckyNumber).toEqual(69);

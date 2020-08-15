@@ -1,11 +1,16 @@
-import { QldbDriver, Result } from 'amazon-qldb-driver-nodejs';
+import { Result } from 'amazon-qldb-driver-nodejs';
 import { QldbQuery, getQueryFilter } from './query';
 import { Logger } from '@nestjs/common';
+import { QldbQueryService } from './query.service';
 
 export class Repository<T> {
   private readonly logger: Logger;
-  constructor(private readonly driver: QldbDriver, readonly tableName: string) {
-    this.logger = new Logger(`Repository_${tableName}`);
+
+  constructor(
+    private readonly queryService: QldbQueryService,
+    readonly tableName: string,
+  ) {
+    this.logger = new Logger(`Repository_${tableName}`.toLocaleUpperCase());
   }
 
   /**
@@ -13,16 +18,18 @@ export class Repository<T> {
    * @param query A QlDB Query. Note that if your filter is a string, you're responsible for prefixing fields with 'tbl.'
    *
    */
-
   async query(query: QldbQuery<T>): Promise<Array<T & { id: string }>> {
     const fields = !!query.fields
       ? query.fields.map(x => `tbl.${x}`).join(', ')
       : 'tbl.*';
+
     const filter = !!query.filter ? getQueryFilter<T>(query.filter) : '1 = 1';
+
     const formattedQuery = `SELECT id, ${fields} FROM ${this.tableName} as tbl by id WHERE ${filter}`;
+
     this.logger.log(`Running query: ${formattedQuery}`);
-    const result = await this.execute(formattedQuery);
-    return this.mapResultsToObjects<T & { id: string }>(result);
+
+    return await this.queryService.query<T & { id: string }>(formattedQuery);
   }
 
   /**
@@ -31,17 +38,14 @@ export class Repository<T> {
    */
 
   async create(data: T): Promise<T & { id: string }> {
-    const result = await this.execute(`INSERT INTO ${this.tableName} ?`, [
-      data,
-    ]);
-
-    const createResult = this.mapResultsToObjects<{ documentId: string }>(
-      result,
-    )?.[0];
+    const result = await this.queryService.querySingle<{ documentId: string }>(
+      `INSERT INTO ${this.tableName} ?`,
+      [data],
+    );
 
     return {
       ...data,
-      id: createResult.documentId,
+      id: result?.documentId,
     };
   }
 
@@ -51,7 +55,7 @@ export class Repository<T> {
    */
 
   async retrieve(id: string): Promise<T & { id: string }> {
-    const result = await this.execute(
+    return await this.queryService.querySingle<T & { id: string }>(
       [
         `SELECT id, t.*`,
         `FROM ${this.tableName} AS t`,
@@ -59,8 +63,6 @@ export class Repository<T> {
       ].join(' '),
       id,
     );
-
-    return this.mapResultsToObjects<T & { id: string }>(result)?.[0];
   }
 
   /**
@@ -70,7 +72,7 @@ export class Repository<T> {
    */
 
   async replace(id: string, data: T): Promise<void> {
-    await this.execute(
+    await this.queryService.execute(
       [
         `UPDATE ${this.tableName} AS tblrow BY id`,
         `SET tblrow = ?`,
@@ -84,22 +86,23 @@ export class Repository<T> {
    * Destroys a record from the table view. Note: no data is ever permanantly deleted from the underlying ledger.
    * @param id THe QLDB id you want to delete from the table.
    */
-
   async destroy(id: string): Promise<void> {
-    await this.execute(`DELETE FROM ${this.tableName} BY id WHERE id = ?`, id);
+    await this.queryService.execute(
+      `DELETE FROM ${this.tableName} BY id WHERE id = ?`,
+      id,
+    );
   }
 
   async history(id: string): Promise<T[]> {
-    const result = await this.execute(
+    return await this.queryService.queryForSubdocument(
       [
         `SELECT *`,
         `FROM history(${this.tableName}) AS h`,
         `WHERE h.metadata.id = ?`,
       ].join(' '),
+      'data',
       id,
     );
-
-    return this.mapResultsToObjects<T>(result, 'data');
   }
 
   /**
@@ -107,7 +110,9 @@ export class Repository<T> {
    */
 
   private async createTable(): Promise<number> {
-    const result = await this.execute(`CREATE TABLE ${this.tableName}`);
+    const result = await this.queryService.execute(
+      `CREATE TABLE ${this.tableName}`,
+    );
 
     return result.getResultList().length;
   }
@@ -121,7 +126,7 @@ export class Repository<T> {
     const results: Result[] = [];
     for (const field of indexFields) {
       try {
-        const result = await this.execute(
+        const result = await this.queryService.execute(
           `CREATE INDEX ON ${this.tableName} (${field})`,
         );
         results.push(result);
@@ -156,23 +161,5 @@ export class Repository<T> {
         this.logger.warn(err);
       }
     }
-  }
-
-  private async execute(statement: string, ...parameters: any[]) {
-    const result: Result = await this.driver.executeLambda(
-      async txn => await txn.execute(statement, ...parameters),
-    );
-
-    return result;
-  }
-
-  private mapResultsToObjects<T>(result: Result, subproperty?: string): T[] {
-    const resultList = result.getResultList();
-
-    return resultList.map(value => {
-      const parsedJson = JSON.parse(JSON.stringify(value));
-
-      return subproperty ? parsedJson[subproperty] : parsedJson;
-    });
   }
 }

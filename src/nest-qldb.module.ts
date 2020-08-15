@@ -4,6 +4,7 @@ import { QldbDriver } from 'amazon-qldb-driver-nodejs';
 import { Repository } from './repository';
 import { createQldbRepositoryToken, QLDB_DRIVER_TOKEN } from './tokens';
 import { TableRegistrations } from './decorators';
+import { QldbQueryService } from './query.service';
 
 @Module({})
 export class NestQldbModule {
@@ -27,30 +28,12 @@ export class NestQldbModule {
       global: true,
       module: NestQldbModule,
       imports: [],
-      providers: [],
-      exports: [],
+      providers: [QldbQueryService],
+      exports: [QldbQueryService],
     };
 
-    const addAsyncProvider = <T>(
-      provide: string,
-      asyncProvider: AsyncProvider<T>,
-      exportable: boolean,
-    ) => {
-      const imports = (asyncProvider as ImportableFactoryProvider<T>).imports;
-      if (imports?.length) {
-        imports.forEach(i => module.imports.push(i));
-      }
-      delete (asyncProvider as ImportableFactoryProvider<T>).imports;
-      module.providers.push({
-        ...asyncProvider,
-        provide,
-      });
-      if (exportable) {
-        module.exports.push(provide);
-      }
-    };
-
-    addAsyncProvider<QldbDriver | Promise<QldbDriver>>(
+    this.addAsyncProvider(
+      module,
       QLDB_DRIVER_TOKEN,
       moduleOptions.qldbDriver,
       true,
@@ -66,6 +49,28 @@ export class NestQldbModule {
     return module;
   }
 
+  private static addAsyncProvider<T>(
+    module: DynamicModule,
+    provide: string,
+    asyncProvider: AsyncProvider<T>,
+    exportable: boolean,
+  ) {
+    const imports = (asyncProvider as ImportableFactoryProvider<T>).imports;
+    if (imports?.length) {
+      imports.forEach(i => module.imports.push(i));
+    }
+    delete (asyncProvider as ImportableFactoryProvider<T>).imports;
+
+    module.providers.push({
+      ...asyncProvider,
+      provide,
+    });
+
+    if (exportable) {
+      module.exports.push(provide);
+    }
+  }
+
   private static createRepositoryProviders = (
     createTablesAndIndexes: boolean,
   ): FactoryProvider<Promise<Repository<any>>>[] => {
@@ -73,17 +78,21 @@ export class NestQldbModule {
       const tableName = TableRegistrations.get(key)?.tableName?.length
         ? TableRegistrations.get(key)?.tableName
         : `${key.name.toLowerCase()}s`;
+
       const indexes = TableRegistrations.get(key)?.tableIndexes as string[];
+
       return {
         provide: createQldbRepositoryToken(key),
-        useFactory: async (driver: QldbDriver) => {
-          const repository = new Repository(driver, tableName);
+        useFactory: async (queryService: QldbQueryService) => {
+          const repository = new Repository(queryService, tableName);
+
           if (createTablesAndIndexes) {
             await repository.createTableAndIndexes(indexes);
           }
+
           return repository;
         },
-        inject: [QLDB_DRIVER_TOKEN],
+        inject: [QldbQueryService],
       };
     });
   };

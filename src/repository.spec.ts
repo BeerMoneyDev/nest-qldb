@@ -1,5 +1,6 @@
 import { Repository } from './repository';
 import { QldbDriver, TransactionExecutor } from 'amazon-qldb-driver-nodejs';
+import { QldbQueryService } from './query.service';
 
 class TestClass {
   testerName: string;
@@ -23,7 +24,7 @@ describe('Repository', () => {
     } as any) as QldbDriver;
 
     executeLambdaSpy = jest.spyOn(driver, 'executeLambda');
-    subject = new Repository(driver, tableName);
+    subject = new Repository(new QldbQueryService(driver), tableName);
   });
 
   describe('query()', () => {
