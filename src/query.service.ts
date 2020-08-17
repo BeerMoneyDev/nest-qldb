@@ -11,7 +11,7 @@ export class QldbQueryService {
 
   async query<T>(statement: string, ...parameters: any[]): Promise<T[]> {
     const result = await this.execute(statement, ...parameters);
-    console.log({ result });
+
     return this.mapResultsToObjects<T>(result);
   }
 
