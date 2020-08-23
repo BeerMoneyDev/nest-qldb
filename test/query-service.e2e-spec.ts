@@ -2,8 +2,6 @@ import { Module, Injectable } from '@nestjs/common';
 import {
   NestQldbModule,
   QldbTable,
-  Repository,
-  InjectRepository,
   QldbDriver,
   QldbQueryService,
 } from '../src';
@@ -31,8 +29,36 @@ class User {
 @Injectable()
 class UserService {
   constructor(
-    @InjectRepository(User) readonly usersRepository: Repository<User>,
+    private readonly queryService: QldbQueryService,
   ) {}
+
+  async create(data: User): Promise<User & { id: string }> {
+    const result = await this.queryService.querySingle<{ documentId: string }>(
+      `INSERT INTO app_users ?`,
+      [data],
+    );
+
+    return {
+      ...data,
+      id: result?.documentId,
+    };
+  }
+
+  /**
+   * Retrieves a record based on the QLDB id.
+   * @param id The QLDB ID of the object.
+   */
+
+  async retrieve(id: string): Promise<User & { id: string }> {
+    return await this.queryService.querySingle<User & { id: string }>(
+      [
+        `SELECT id, u.*`,
+        `FROM app_users AS u`,
+        `BY id WHERE id = ?`,
+      ].join(' '),
+      id,
+    );
+  }
 }
 /* END USERS */
 
@@ -47,7 +73,7 @@ class UserService {
           profile: 'test-profile',
         }),
       }),
-      createTablesAndIndexes: false,
+      createTablesAndIndexes: true,
       tables: [User],
     }),
   ],
@@ -75,46 +101,11 @@ describe('NestQldbModule.forRoot()', () => {
     });
 
     // create
-    const created = await userService.usersRepository.create(user);
+    const created = await userService.create(user);
     expect(created.name).toStrictEqual(name);
 
-    // custom query
-    const queryService = module.get(QldbQueryService);
-    const result = await queryService.query<User>(
-      `
-      SELECT a.*
-      FROM app_users AS a, 
-          a.groups AS m
-      WHERE m.name = ?
-    `,
-      'best_golfers_ever',
-    );
-    expect(result.find(r => r.name === 'Billy Madison')).toBeDefined();
-
     // retrieve
-    const get = await userService.usersRepository.retrieve(created.id);
-    expect(get.name).toStrictEqual(name);
-    expect(get.id).toStrictEqual(created.id);
-    const queryResult = await userService.usersRepository.query({
-      fields: ['luckyNumber'],
-      filter: { name: { operator: '=', value: name } },
-    });
-    expect(queryResult.some(x => x.luckyNumber === luckyNumber)).toBeTruthy();
-
-    // updates
-    user.luckyNumber = 68;
-    await userService.usersRepository.replace(created.id, user);
-    const updated = await userService.usersRepository.retrieve(created.id);
-    expect(updated.luckyNumber).toEqual(68);
-
-    // deletes
-    await userService.usersRepository.destroy(created.id);
-
-    // history
-    const history = await userService.usersRepository.history(created.id);
-    expect(history.length).toBe(3);
-    expect(history[0].luckyNumber).toEqual(69);
-    expect(history[1].luckyNumber).toEqual(68);
-    expect(history[2]).toBe(undefined);
+    const retrieved = await userService.retrieve(created.id);
+    expect(retrieved.name).toStrictEqual(name);
   });
 });

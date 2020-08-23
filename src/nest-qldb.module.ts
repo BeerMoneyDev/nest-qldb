@@ -1,4 +1,4 @@
-import { Module, DynamicModule, FactoryProvider } from '@nestjs/common';
+import { Module, DynamicModule, FactoryProvider, Type } from '@nestjs/common';
 import { AsyncProvider, ImportableFactoryProvider } from './types';
 import { QldbDriver } from 'amazon-qldb-driver-nodejs';
 import { Repository } from './repository';
@@ -11,18 +11,21 @@ export class NestQldbModule {
   static forRoot(moduleOptions: {
     qldbDriver: QldbDriver;
     createTablesAndIndexes?: boolean;
+    tables: Type<any>[];
   }): DynamicModule {
     return this.forRootAsync({
       qldbDriver: {
         useValue: moduleOptions.qldbDriver,
       },
       createTablesAndIndexes: !!moduleOptions.createTablesAndIndexes,
+      tables: moduleOptions.tables,
     });
   }
 
   static forRootAsync(moduleOptions: {
     qldbDriver: AsyncProvider<QldbDriver | Promise<QldbDriver>>;
     createTablesAndIndexes: boolean;
+    tables: Type<any>[];
   }): DynamicModule {
     const module: DynamicModule = {
       global: true,
