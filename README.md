@@ -5,13 +5,14 @@
 </div>
 <br />
 <div align="center">
-  <strong>A <a href="https://github.com/nestjs">NestJS</a> module wrapping Amazon's Quantum Ledger Databse in a repository pattern with clean dependency injection.</strong>
+  <strong>A <a href="https://github.com/nestjs">NestJS</a> module wrapping Amazon's Quantum Ledger Database with clean dependency injection for auto-generated repsitory layers or simple query service layer.</strong>
 </div>
 
 # Features
 * Extends the `amazon-qldb-driver-nodejs` work to add ODM functionality for QLDB common in NestJS.
 * A simple dependency injection model with `NestQldbModule.forRoot()`, `NestQldbModule.forRootAsync()`.
 * Simple auto-generated CRUD repositories for models, injectable by `@InjectRepository(model)`.
+* Provides a `QldbQueryService` provider for a simple Dapper-inspired query layer.
 
 # How To Use
 
@@ -29,14 +30,17 @@ npm install --save nest-qldb
 <strong>Note</strong>: It is necessary that the ledger be created before application initialization. 
 
 ```ts
-import { NestQldbModule, QldbDriver } from 'nest-qldb';
-
 // app.module.ts
+
+import { NestQldbModule, QldbDriver } from 'nest-qldb';
+import { User } from './user.model.ts';
+
 @Module({
   imports: [
     NestQldbModule.forRoot({
       qldbDriver: new QldbDriver('fake-ledger')
       createTablesAndIndexes: true,
+      tables: [User],
     }),
   ],
 })
@@ -52,10 +56,11 @@ class AppRootModule {}
 `NestQldbModule.forRootAsync()` allows for a `FactoryProvider` or `ValueProvider` dependency declaration to import our module. Note that `ExistingProvider` and `ClassProvider` are not yet supported.
 
 ```ts
+// app.module.ts
 import { NestQldbModule, QldbDriver } from 'nest-qldb';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { User } from './user.model.ts';
 
-// app.module.ts
 @Module({
   imports: [
     NestQldbModule.forRootAsync({
@@ -69,6 +74,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         inject: [ConfigService],
       },
       createTablesAndIndexes: true,
+      tables: [User],
     }),
     ConfigModule.forRoot(),
   ],
@@ -82,13 +88,12 @@ class AppRootModule {}
 
 Model classes are the shape of the data in your QLDB tables. The `@QldbTable()` decorator is used to register your model as a table in Quantum Ledger Database. </br>
 You can also define the tableName and indexes associated with that model. <strong>NOTE</strong>: You can only create index when tables are empty so in the module config.
-There is config on the module to perform this action at startup createTablesAndIndexes, it gracefully handles tables/indexes already created, however, it'll cost you a few seconds on a cold start so
-it is advised to turn it off in a production serverless scenario.
+There is config on the module to perform this action at startup createTablesAndIndexes, it gracefully handles tables/indexes already created, however, it'll cost you a few seconds on a cold start so it is advised to turn it off in a production serverless scenario.
 
 #### With decorator
 ```ts
-import { QldbTable } from 'nest-qldb'
 // user.model.ts
+import { QldbTable } from 'nest-qldb'
 
 @QldbTable({
   tableName: 'users',
@@ -109,8 +114,6 @@ This is the name of the collection stored in QLDB.
 ##### tableIndexes
 
 These indexes will be created upon table creation. You cannot create indexes after records are inserted, so be aware.
-
-
 
 ## Repository injection
 
@@ -137,9 +140,48 @@ class UserController {
 }
 ```
 
+## QldbQueryService
+
+The `QldbQueryService` provider exposes simple methods that query and map the object to plain JSON objects.
+
+* `query` - Performs a query returning a list of rows mapped to a plain JSON object.
+* `querySingle` - Performs a query returning a single row mapped to a plain JSON object.
+* `queryForSubdocument` - Performs a query returning a list of nested documents in rows mapped to a plain JSON object.
+* `querySingleForSubdocument` - Performs a query returning a nested documents in single row mapped to a plain JSON object.
+* `execute` - Performs a query that returns no results. Ideal for inserts, updates, and deletes.
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { QldbQueryService } from 'nest-qldb';
+import { SearchResult } from './search.interfaces';
+
+@Injectable()
+class UserService {
+  constructor(
+    private readonly queryService: QldbQueryService,
+  ) {
+  }
+
+  async searchUsers(searchQuery: string) {
+    return await this.queryService.query<SearchResult>(
+      `
+      SELECT
+        id as userId,
+        u.name as userName,
+        u.email as userEmail
+      FROM users AS u BY id
+      WHERE LOWER(u.name) LIKE ?
+        OR LOWER(u.email) LIKE ?
+      `,
+      searchQuery?.toLocaleLowerCase(),
+    );
+  }
+}
+```
+
 # Stay In Touch
 
-* Author - [Benjamin Main](https://twitter.com/Ben05920582) and BeerMoneyDev
+* Author - [Benjamin Main](https://twitter.com/Ben05920582) and [BeerMoneyDev](https://www.beermoney.dev)
 
 ## License
 
