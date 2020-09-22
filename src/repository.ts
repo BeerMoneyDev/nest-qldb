@@ -38,6 +38,7 @@ export class Repository<T> {
    */
 
   async create(data: T): Promise<T & { id: string }> {
+    delete data['id'];
     const result = await this.queryService.querySingle<{ documentId: string }>(
       `INSERT INTO ${this.tableName} ?`,
       [data],
@@ -72,6 +73,7 @@ export class Repository<T> {
    */
 
   async replace(id: string, data: T): Promise<void> {
+    delete data['id'];
     await this.queryService.execute(
       [
         `UPDATE ${this.tableName} AS tblrow BY id`,
