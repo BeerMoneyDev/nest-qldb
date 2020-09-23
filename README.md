@@ -88,7 +88,7 @@ class AppRootModule {}
 
 Model classes are the shape of the data in your QLDB tables. The `@QldbTable()` decorator is used to register your model as a table in Quantum Ledger Database. </br>
 You can also define the tableName and indexes associated with that model. <strong>NOTE</strong>: You can only create index when tables are empty so in the module config.
-There is config on the module to perform this action at startup createTablesAndIndexes, it gracefully handles tables/indexes already created, however, it'll cost you a few seconds on a cold start so it is advised to turn it off in a production serverless scenario.
+There is config on the module to perform this action at startup createTablesAndIndexes, it gracefully handles tables/indexes already created, however, it'll cost you a few seconds on a cold start so it is advised to turn it off in a production serverless scenario. <br/><strong>NOTE: Any id properties will be peeled off models before they are saved! `id` is reserved for the qldb documentid</strong>
 
 #### With decorator
 ```ts
