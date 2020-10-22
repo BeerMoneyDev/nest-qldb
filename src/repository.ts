@@ -2,7 +2,7 @@ import { Result } from 'amazon-qldb-driver-nodejs';
 import { QldbQuery, getQueryFilter } from './query';
 import { Logger } from '@nestjs/common';
 import { QldbQueryService } from './query.service';
-
+import { chunk } from 'lodash';
 export class Repository<T> {
   private readonly logger: Logger;
 
@@ -53,15 +53,23 @@ export class Repository<T> {
   async createMany(records: T[]): Promise<(T & { id: string })[]> {
     const updatedRecords = records.map(x => {
       delete x['id'];
-      return x;
+      return { ...x };
     });
-    const count = updatedRecords.length;
-    const repeated = ' ?,'.repeat(count).slice(0, -1);
-    const results = await this.queryService.query<{ documentId: string }>(
-      `INSERT INTO ${this.tableName} << ${repeated} >>`,
-      ...updatedRecords,
-    );
-    return updatedRecords.map((x, i) => ({ ...x, id: results[i].documentId }));
+    // 40 Documents is currently the most that can be modified in a single transaction
+    const chunks = chunk(updatedRecords, 40);
+    const finalResults: (T & { id: string })[] = [];
+    for (const aChunk of chunks) {
+      const count = aChunk.length;
+      const repeated = ' ?,'.repeat(count).slice(0, -1);
+      const results = await this.queryService.query<{ documentId: string }>(
+        `INSERT INTO ${this.tableName} << ${repeated} >>`,
+        ...aChunk,
+      );
+      finalResults.push(
+        ...aChunk.map((x, i) => ({ ...x, id: results[i].documentId })),
+      );
+    }
+    return finalResults;
   }
 
   /**
