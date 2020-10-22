@@ -47,7 +47,7 @@ class UserService {
           profile: 'test-profile',
         }),
       }),
-      createTablesAndIndexes: false,
+      createTablesAndIndexes: true,
       tables: [User],
     }),
   ],
@@ -116,5 +116,26 @@ describe('NestQldbModule.forRoot()', () => {
     expect(history[0].luckyNumber).toEqual(69);
     expect(history[1].luckyNumber).toEqual(68);
     expect(history[2]).toBe(undefined);
+
+    // createMany
+    const users: User[] = [
+      {
+        dob: new Date('1920-02-01'),
+        name: 'John Doe',
+        gender: 'male',
+        sex: 'M',
+        luckyNumber: 4,
+        groups: null,
+      },
+      {
+        dob: new Date('1924-02-01'),
+        name: 'Jane Doe',
+        gender: 'female',
+        sex: 'F',
+        luckyNumber: 54,
+        groups: [],
+      },
+    ];
+    await userService.usersRepository.createMany(users);
   });
 });

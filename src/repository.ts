@@ -50,6 +50,20 @@ export class Repository<T> {
     };
   }
 
+  async createMany(records: T[]): Promise<(T & { id: string })[]> {
+    const updatedRecords = records.map(x => {
+      delete x['id'];
+      return x;
+    });
+    const count = updatedRecords.length;
+    const repeated = ' ?,'.repeat(count).slice(0, -1);
+    const results = await this.queryService.query<{ documentId: string }>(
+      `INSERT INTO ${this.tableName} << ${repeated} >>`,
+      ...updatedRecords,
+    );
+    return updatedRecords.map((x, i) => ({ ...x, id: results[i].documentId }));
+  }
+
   /**
    * Retrieves a record based on the QLDB id.
    * @param id The QLDB ID of the object.
