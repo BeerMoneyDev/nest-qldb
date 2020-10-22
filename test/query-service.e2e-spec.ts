@@ -28,9 +28,7 @@ class User {
 
 @Injectable()
 class UserService {
-  constructor(
-    private readonly queryService: QldbQueryService,
-  ) {}
+  constructor(private readonly queryService: QldbQueryService) {}
 
   async create(data: User): Promise<User & { id: string }> {
     const result = await this.queryService.querySingle<{ documentId: string }>(
@@ -51,11 +49,7 @@ class UserService {
 
   async retrieve(id: string): Promise<User & { id: string }> {
     return await this.queryService.querySingle<User & { id: string }>(
-      [
-        `SELECT id, u.*`,
-        `FROM app_users AS u`,
-        `BY id WHERE id = ?`,
-      ].join(' '),
+      [`SELECT id, u.*`, `FROM app_users AS u`, `BY id WHERE id = ?`].join(' '),
       id,
     );
   }

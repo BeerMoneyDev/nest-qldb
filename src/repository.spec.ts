@@ -199,4 +199,27 @@ describe('Repository', () => {
       expect(executeLambdaSpy).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('createMany()', () => {
+    it('should create many records in one transaction', async () => {
+      const expectedResponse: TestClass[] = [
+        {
+          testerName: 'Happy Gilmore',
+          testerAge: 35,
+        },
+        {
+          testerName: 'Billy Madison',
+          testerAge: 40,
+        },
+      ];
+      const documentId = '1234';
+      const qldbResponse = {
+        getResultList: () => expectedResponse.map(x => ({ ...x, documentId })),
+      };
+      executeLambdaSpy.mockReturnValue(Promise.resolve(qldbResponse));
+      const response = await subject.createMany(expectedResponse);
+      expect(executeLambdaSpy).toHaveBeenCalledTimes(1);
+      expect(response[0].id).toEqual(documentId);
+    });
+  });
 });
