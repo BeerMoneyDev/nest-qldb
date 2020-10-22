@@ -125,6 +125,7 @@ Repositories can be injected using the `@InjectRepository()` decorator. The repo
 * `replace(id: string, data: T)` - Replaces an entire document based on the id. 
 * `destroy(id: string)` - Deletes an object from the table but not its change history from the ledger.
 * `history(id: string)` - Fetches all versions of a document across history
+* `createMany(data: T[])` - Will save many records in transactional batches of 40.
 
 ```ts
 @Controller()
