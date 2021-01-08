@@ -1,7 +1,12 @@
 import { DynamicModule, ValueProvider, FactoryProvider } from '@nestjs/common';
 
-export interface TableOptions<T> {
-  tableName?: string;
+export type RepositoryOptions = {
+  tableName: string;
+  keyField: string;
+  useMetadataKey: boolean;
+};
+
+export interface TableOptions<T> extends Partial<RepositoryOptions> {
   tableIndexes?: Array<keyof T>;
 }
 

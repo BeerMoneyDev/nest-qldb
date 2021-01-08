@@ -1,16 +1,20 @@
-import { Result } from 'amazon-qldb-driver-nodejs';
-import { QldbQuery, getQueryFilter } from './query';
 import { Logger } from '@nestjs/common';
-import { QldbQueryService } from './query.service';
+import { Result } from 'amazon-qldb-driver-nodejs';
 import { chunk } from 'lodash';
+import { QldbQuery, getQueryFilter } from './query';
+import { QldbQueryService } from './query.service';
+import { RepositoryOptions } from './types';
+
 export class Repository<T> {
   private readonly logger: Logger;
 
   constructor(
     private readonly queryService: QldbQueryService,
-    readonly tableName: string,
+    private readonly config: RepositoryOptions,
   ) {
-    this.logger = new Logger(`Repository_${tableName}`.toLocaleUpperCase());
+    this.logger = new Logger(
+      `Repository_${config.tableName}`.toLocaleUpperCase(),
+    );
   }
 
   /**
@@ -25,7 +29,11 @@ export class Repository<T> {
 
     const filter = !!query.filter ? getQueryFilter<T>(query.filter) : '1 = 1';
 
-    const formattedQuery = `SELECT id, ${fields} FROM ${this.tableName} as tbl by id WHERE ${filter}`;
+    const formattedQuery = `SELECT ${this.config.keyField}, ${fields} FROM ${
+      this.config.tableName
+    } as tbl ${
+      this.config.useMetadataKey ? 'BY ' + this.config.keyField : ''
+    } WHERE ${filter}`;
 
     this.logger.log(`Running query: ${formattedQuery}`);
 
@@ -38,22 +46,28 @@ export class Repository<T> {
    */
 
   async create(data: T): Promise<T & { id: string }> {
-    delete data['id'];
+    if (this.config.useMetadataKey) {
+      delete data[this.config.keyField];
+    }
     const result = await this.queryService.querySingle<{ documentId: string }>(
-      `INSERT INTO ${this.tableName} ?`,
+      `INSERT INTO ${this.config.tableName} ?`,
       [data],
     );
 
     return {
       ...data,
-      id: result?.documentId,
+      id: this.config.useMetadataKey
+        ? result?.documentId
+        : data[this.config.keyField],
     };
   }
 
   async createMany(records: T[]): Promise<(T & { id: string })[]> {
-    const updatedRecords = records.map(x => {
-      delete x['id'];
-      return { ...x };
+    const updatedRecords = records.map(record => {
+      if (this.config.useMetadataKey) {
+        delete record['id'];
+      }
+      return { ...record };
     });
     // 40 Documents is currently the most that can be modified in a single transaction
     const chunks = chunk(updatedRecords, 40);
@@ -62,7 +76,7 @@ export class Repository<T> {
       const count = aChunk.length;
       const repeated = ' ?,'.repeat(count).slice(0, -1);
       const results = await this.queryService.query<{ documentId: string }>(
-        `INSERT INTO ${this.tableName} << ${repeated} >>`,
+        `INSERT INTO ${this.config.tableName} << ${repeated} >>`,
         ...aChunk,
       );
       finalResults.push(
@@ -80,9 +94,11 @@ export class Repository<T> {
   async retrieve(id: string): Promise<T & { id: string }> {
     return await this.queryService.querySingle<T & { id: string }>(
       [
-        `SELECT id, t.*`,
-        `FROM ${this.tableName} AS t`,
-        `BY id WHERE id = ?`,
+        `SELECT ${this.config.keyField}, t.*`,
+        `FROM ${this.config.tableName} AS t`,
+        `${
+          this.config.useMetadataKey ? 'BY ' + this.config.keyField : ''
+        } WHERE ${this.config.keyField} = ?`,
       ].join(' '),
       id,
     );
@@ -95,12 +111,16 @@ export class Repository<T> {
    */
 
   async replace(id: string, data: T): Promise<void> {
-    delete data['id'];
+    if (this.config.useMetadataKey) {
+      delete data[this.config.keyField];
+    }
     await this.queryService.execute(
       [
-        `UPDATE ${this.tableName} AS tblrow BY id`,
+        `UPDATE ${this.config.tableName} AS tblrow ${
+          this.config.useMetadataKey ? 'BY ' + this.config.keyField : ''
+        }`,
         `SET tblrow = ?`,
-        `WHERE id = '${id}'`,
+        `WHERE ${this.config.keyField} = '${id}'`,
       ].join(' '),
       data,
     );
@@ -112,7 +132,9 @@ export class Repository<T> {
    */
   async destroy(id: string): Promise<void> {
     await this.queryService.execute(
-      `DELETE FROM ${this.tableName} BY id WHERE id = ?`,
+      `DELETE FROM ${this.config.tableName} ${
+        this.config.useMetadataKey ? 'BY ' + this.config.keyField : ''
+      } WHERE ${this.config.keyField} = ?`,
       id,
     );
   }
@@ -121,8 +143,10 @@ export class Repository<T> {
     return await this.queryService.queryForSubdocument(
       [
         `SELECT *`,
-        `FROM history(${this.tableName}) AS h`,
-        `WHERE h.metadata.id = ?`,
+        `FROM history(${this.config.tableName}) AS h`,
+        `WHERE h.${this.config.useMetadataKey ? 'metadata.' : 'data'}.${
+          this.config.keyField
+        } = ?`,
       ].join(' '),
       'data',
       id,
@@ -135,7 +159,7 @@ export class Repository<T> {
 
   private async createTable(): Promise<number> {
     const result = await this.queryService.execute(
-      `CREATE TABLE ${this.tableName}`,
+      `CREATE TABLE ${this.config.tableName}`,
     );
 
     return result.getResultList().length;
@@ -151,7 +175,7 @@ export class Repository<T> {
     for (const field of indexFields) {
       try {
         const result = await this.queryService.execute(
-          `CREATE INDEX ON ${this.tableName} (${field})`,
+          `CREATE INDEX ON ${this.config.tableName} (${field})`,
         );
         results.push(result);
       } catch (err) {
@@ -169,7 +193,7 @@ export class Repository<T> {
   async createTableAndIndexes(indexFields: string[]) {
     this.logger.log(
       `Setting up table ${
-        this.tableName
+        this.config.tableName
       } with field indexes ${indexFields?.join(', ')}`,
     );
     try {

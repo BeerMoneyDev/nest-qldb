@@ -24,7 +24,11 @@ describe('Repository', () => {
     } as any) as QldbDriver;
 
     executeLambdaSpy = jest.spyOn(driver, 'executeLambda');
-    subject = new Repository(new QldbQueryService(driver), tableName);
+    subject = new Repository(new QldbQueryService(driver), {
+      tableName,
+      keyField: 'id',
+      useMetadataKey: true,
+    });
   });
 
   describe('query()', () => {

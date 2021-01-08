@@ -78,16 +78,22 @@ export class NestQldbModule {
     createTablesAndIndexes: boolean,
   ): FactoryProvider<Promise<Repository<any>>>[] => {
     return TableRegistrations.keys().map(key => {
-      const tableName = TableRegistrations.get(key)?.tableName?.length
-        ? TableRegistrations.get(key)?.tableName
+      const registration = TableRegistrations.get(key);
+      const tableName = registration?.tableName?.length
+        ? registration.tableName
         : `${key.name.toLowerCase()}s`;
 
-      const indexes = TableRegistrations.get(key)?.tableIndexes as string[];
+      const indexes = registration?.tableIndexes as string[];
 
       return {
         provide: createQldbRepositoryToken(key),
         useFactory: async (queryService: QldbQueryService) => {
-          const repository = new Repository(queryService, tableName);
+          const repository = new Repository(queryService, {
+            useMetadataKey: true,
+            keyField: 'id',
+            ...registration,
+            tableName,
+          });
 
           if (createTablesAndIndexes) {
             await repository.createTableAndIndexes(indexes);
