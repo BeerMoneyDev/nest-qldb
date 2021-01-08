@@ -9,10 +9,11 @@
 </div>
 
 # Features
-* Extends the `amazon-qldb-driver-nodejs` work to add ODM functionality for QLDB common in NestJS.
-* A simple dependency injection model with `NestQldbModule.forRoot()`, `NestQldbModule.forRootAsync()`.
-* Simple auto-generated CRUD repositories for models, injectable by `@InjectRepository(model)`.
-* Provides a `QldbQueryService` provider for a simple Dapper-inspired query layer.
+
+- Extends the `amazon-qldb-driver-nodejs` work to add ODM functionality for QLDB common in NestJS.
+- A simple dependency injection model with `NestQldbModule.forRoot()`, `NestQldbModule.forRootAsync()`.
+- Simple auto-generated CRUD repositories for models, injectable by `@InjectRepository(model)`.
+- Provides a `QldbQueryService` provider for a simple Dapper-inspired query layer.
 
 # How To Use
 
@@ -27,7 +28,7 @@ npm install --save nest-qldb
 ### NestQldbModule.forRoot()
 
 `NestQldbModule.forRoot()` is the simplest way to import the QLDB module and autowire `@QldbTable` decorators. We re-export the `QldbDriver` from `amazon-qldb-driver-nodejs`.<br/>
-<strong>Note</strong>: It is necessary that the ledger be created before application initialization. 
+<strong>Note</strong>: It is necessary that the ledger be created before application initialization.
 
 ```ts
 // app.module.ts
@@ -66,10 +67,11 @@ import { User } from './user.model.ts';
     NestQldbModule.forRootAsync({
       qldbDriver: {
         useFactory: async (configService: ConfigService) => {
-          return new QldbDriver(
-            configService.qldbLedgerName, 
-            { credentials: new SharedIniFileCredentials({ profile: config.qldbProfileName})},
-          );
+          return new QldbDriver(configService.qldbLedgerName, {
+            credentials: new SharedIniFileCredentials({
+              profile: config.qldbProfileName,
+            }),
+          });
         },
         inject: [ConfigService],
       },
@@ -91,9 +93,10 @@ You can also define the tableName and indexes associated with that model. <stron
 There is config on the module to perform this action at startup createTablesAndIndexes, it gracefully handles tables/indexes already created, however, it'll cost you a few seconds on a cold start so it is advised to turn it off in a production serverless scenario. <br/><strong>NOTE: Any id properties will be peeled off models before they are saved! `id` is reserved for the qldb documentid</strong>
 
 #### With decorator
+
 ```ts
 // user.model.ts
-import { QldbTable } from 'nest-qldb'
+import { QldbTable } from 'nest-qldb';
 
 @QldbTable({
   tableName: 'users',
@@ -115,17 +118,29 @@ This is the name of the collection stored in QLDB.
 
 These indexes will be created upon table creation. You cannot create indexes after records are inserted, so be aware.
 
+##### useMetadataKey
+
+_Default:_ `true`
+
+This declares whether the key field should be a value in the QLDB metadata object (`true`), or a part of the data object (`false`).
+
+##### keyField
+
+_Default:_ `id`
+
+This declares the field that will be used as the key.
+
 ## Repository injection
 
 Repositories can be injected using the `@InjectRepository()` decorator. The repositories are created by `nest-qldb` and are a simple CRUD interface handy for quickly creating REST controllers.
 
-* `query(query QldbQuery)` - Performs Partiql query against table.
-* `create(data: T)` - Adds an object to the QLDB table
-* `retrieve(id: string)` - Fetches a single document by it's QLDB assigned id.
-* `replace(id: string, data: T)` - Replaces an entire document based on the id. 
-* `destroy(id: string)` - Deletes an object from the table but not its change history from the ledger.
-* `history(id: string)` - Fetches all versions of a document across history
-* `createMany(data: T[])` - Will save many records in transactional batches of 40.
+- `query(query QldbQuery)` - Performs Partiql query against table.
+- `create(data: T)` - Adds an object to the QLDB table
+- `retrieve(id: string)` - Fetches a single document by it's QLDB assigned id.
+- `replace(id: string, data: T)` - Replaces an entire document based on the id.
+- `destroy(id: string)` - Deletes an object from the table but not its change history from the ledger.
+- `history(id: string)` - Fetches all versions of a document across history
+- `createMany(data: T[])` - Will save many records in transactional batches of 40.
 
 ```ts
 @Controller()
@@ -145,11 +160,11 @@ class UserController {
 
 The `QldbQueryService` provider exposes simple methods that query and map the object to plain JSON objects.
 
-* `query` - Performs a query returning a list of rows mapped to a plain JSON object.
-* `querySingle` - Performs a query returning a single row mapped to a plain JSON object.
-* `queryForSubdocument` - Performs a query returning a list of nested documents in rows mapped to a plain JSON object.
-* `querySingleForSubdocument` - Performs a query returning a nested documents in single row mapped to a plain JSON object.
-* `execute` - Performs a query that returns no results. Ideal for inserts, updates, and deletes.
+- `query` - Performs a query returning a list of rows mapped to a plain JSON object.
+- `querySingle` - Performs a query returning a single row mapped to a plain JSON object.
+- `queryForSubdocument` - Performs a query returning a list of nested documents in rows mapped to a plain JSON object.
+- `querySingleForSubdocument` - Performs a query returning a nested documents in single row mapped to a plain JSON object.
+- `execute` - Performs a query that returns no results. Ideal for inserts, updates, and deletes.
 
 ```ts
 import { Injectable } from '@nestjs/common';
@@ -158,10 +173,7 @@ import { SearchResult } from './search.interfaces';
 
 @Injectable()
 class UserService {
-  constructor(
-    private readonly queryService: QldbQueryService,
-  ) {
-  }
+  constructor(private readonly queryService: QldbQueryService) {}
 
   async searchUsers(searchQuery: string) {
     return await this.queryService.query<SearchResult>(
@@ -182,7 +194,7 @@ class UserService {
 
 # Stay In Touch
 
-* Author - [Benjamin Main](https://twitter.com/Ben05920582) and [BeerMoneyDev](https://www.beermoney.dev)
+- Author - [Benjamin Main](https://twitter.com/Ben05920582) and [BeerMoneyDev](https://www.beermoney.dev)
 
 ## License
 
