@@ -1,6 +1,7 @@
-export { QldbTable, InjectRepository } from './decorators';
-export { Repository } from './repository';
-export { NestQldbModule } from './nest-qldb.module';
 export { QldbDriver } from 'amazon-qldb-driver-nodejs';
-export * from './query.service';
+export { InjectRepository, QldbTable } from './decorators';
+export { NestQldbModule } from './nest-qldb.module';
+export * from './qldb-query-service-factory.service';
 export * from './query';
+export * from './query.service';
+export { Repository } from './repository';
