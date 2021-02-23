@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/BeerMoneyDev/nest-qldb/compare/v2.1.0...v2.2.0) (2021-02-23)
+
+
+### Features
+
+* **Factory:** Adding factory service to support dynamic drivers ([0d49819](https://github.com/BeerMoneyDev/nest-qldb/commit/0d4981920e8eba4e580d1ef4a9c04370497c829e))
+
 # [2.1.0](https://github.com/BeerMoneyDev/nest-qldb/compare/v2.0.3...v2.1.0) (2021-01-08)
 
 
