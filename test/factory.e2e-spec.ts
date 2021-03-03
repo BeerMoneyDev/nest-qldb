@@ -122,5 +122,7 @@ describe('NestQldbModule.forRootAsync()', () => {
       'best_golfers_ever',
     );
     expect(result.find(r => r.name === 'Billy Madison')).toBeDefined();
+
+    await queryService.execute('DROP TABLE app_users');
   });
 });
