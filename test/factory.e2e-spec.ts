@@ -24,9 +24,9 @@ class User {
 // Setup Module
 const driver = new QldbDriver('test-ledger', {
   region: 'us-east-1',
-  // credentials: new SharedIniFileCredentials({
-  //   profile: 'test-profile',
-  // }),
+  credentials: new SharedIniFileCredentials({
+    profile: 'test-profile',
+  }),
 });
 @Module({
   imports: [NestQldbModule.forRoot({})],
