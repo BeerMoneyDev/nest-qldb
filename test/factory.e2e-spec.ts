@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { SharedIniFileCredentials } from 'aws-sdk';
 import {
   NestQldbModule,
   QldbDriver,
