@@ -14,10 +14,16 @@ export class NestQldbModule {
     createTablesAndIndexes?: boolean;
     tables?: Type<any>[];
   }): DynamicModule {
+    const qldbDriver: AsyncProvider<
+      QldbDriver | Promise<QldbDriver>
+    > = moduleOptions?.qldbDriver
+      ? {
+          useValue: moduleOptions.qldbDriver,
+        }
+      : null;
+
     return this.forRootAsync({
-      qldbDriver: {
-        useValue: moduleOptions.qldbDriver,
-      },
+      qldbDriver,
       createTablesAndIndexes: !!moduleOptions.createTablesAndIndexes,
       tables: moduleOptions.tables,
     });
@@ -25,7 +31,7 @@ export class NestQldbModule {
 
   static forRootAsync(moduleOptions: {
     qldbDriver?: AsyncProvider<QldbDriver | Promise<QldbDriver>>;
-    createTablesAndIndexes: boolean;
+    createTablesAndIndexes?: boolean;
     tables?: Type<any>[];
   }): DynamicModule {
     const module: DynamicModule = {
@@ -36,19 +42,23 @@ export class NestQldbModule {
       exports: [QldbQueryService, QldbQueryServiceFactoryService],
     };
 
-    this.addAsyncProvider(
-      module,
-      QLDB_DRIVER_TOKEN,
-      moduleOptions.qldbDriver,
-      true,
-    );
+    if (moduleOptions?.qldbDriver) {
+      this.addAsyncProvider(
+        module,
+        QLDB_DRIVER_TOKEN,
+        moduleOptions.qldbDriver,
+        true,
+      );
+    }
 
-    this.createRepositoryProviders(
-      moduleOptions.createTablesAndIndexes,
-    ).forEach(cp => {
-      module.providers.push(cp);
-      module.exports.push(cp.provide);
-    });
+    if (moduleOptions?.tables) {
+      this.createRepositoryProviders(
+        moduleOptions.createTablesAndIndexes,
+      ).forEach(cp => {
+        module.providers.push(cp);
+        module.exports.push(cp.provide);
+      });
+    }
 
     return module;
   }

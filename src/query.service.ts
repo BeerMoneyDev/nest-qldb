@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { QldbDriver, Result } from 'amazon-qldb-driver-nodejs';
 import { QLDB_DRIVER_TOKEN } from './tokens';
 
@@ -6,6 +6,7 @@ import { QLDB_DRIVER_TOKEN } from './tokens';
 export class QldbQueryService {
   constructor(
     @Inject(QLDB_DRIVER_TOKEN)
+    @Optional()
     private readonly driver: QldbDriver,
   ) {}
 
