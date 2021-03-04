@@ -1,3 +1,10 @@
+## [2.2.1](https://github.com/BeerMoneyDev/nest-qldb/compare/v2.2.0...v2.2.1) (2021-03-04)
+
+
+### Bug Fixes
+
+* **Module:** Fixing module registration issues ([a2721a7](https://github.com/BeerMoneyDev/nest-qldb/commit/a2721a7b17a595399be9cddb3e79627c60891274))
+
 # [2.2.0](https://github.com/BeerMoneyDev/nest-qldb/compare/v2.1.0...v2.2.0) (2021-02-23)
 
 
