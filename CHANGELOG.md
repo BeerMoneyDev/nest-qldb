@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/BeerMoneyDev/nest-qldb/compare/v2.2.1...v2.3.0) (2021-05-05)
+
+
+### Features
+
+* **Dependencies:** Move many dependencies to peerDependencies. ([ca2851b](https://github.com/BeerMoneyDev/nest-qldb/commit/ca2851ba5ab9770acfff6b6e5be098b565b7bca1))
+
 ## [2.2.1](https://github.com/BeerMoneyDev/nest-qldb/compare/v2.2.0...v2.2.1) (2021-03-04)
 
 
