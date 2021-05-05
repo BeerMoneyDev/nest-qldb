@@ -199,3 +199,5 @@ class UserService {
 ## License
 
 nest-qldb is MIT licensed.
+
+Several core NestDependencies moved to peer dependencies to shrink package size.
