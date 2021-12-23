@@ -37,7 +37,8 @@ export function getQueryFilter<T>(
 
 function getValue(val: EqualityValueSide): string {
   if (Array.isArray(val.value)) {
-    if (val.value.every(item => typeof item === 'string')) {
+    const values = val.value as Array<number | string>;
+    if (values.every(item => typeof item === 'string')) {
       if (val.operator === 'IN') {
         return `( '${(val.value as string[]).join(`' , '`)}' )`;
       } else {
