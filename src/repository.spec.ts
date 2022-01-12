@@ -1,5 +1,9 @@
 import { Repository } from './repository';
-import { QldbDriver, RetryConfig, TransactionExecutor } from 'amazon-qldb-driver-nodejs';
+import {
+  QldbDriver,
+  RetryConfig,
+  TransactionExecutor,
+} from 'amazon-qldb-driver-nodejs';
 import { QldbQueryService } from './query.service';
 
 class TestClass {
@@ -13,8 +17,8 @@ describe('Repository', () => {
   let executeLambdaSpy: jest.SpyInstance<
     Promise<unknown>,
     [
-      transactionLambda: (transactionExecutor: TransactionExecutor) => Promise<unknown>,
-      retryConfig?: RetryConfig
+      (transactionExecutor: TransactionExecutor) => Promise<unknown>,
+      RetryConfig,
     ]
   >;
 
@@ -23,7 +27,7 @@ describe('Repository', () => {
       executeLambda: () => null,
     } as any) as QldbDriver;
 
-    executeLambdaSpy = jest.spyOn(driver, 'executeLambda');
+    executeLambdaSpy = jest.spyOn(driver, 'executeLambda') as any;
     subject = new Repository(new QldbQueryService(driver), {
       tableName,
       keyField: 'id',

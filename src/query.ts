@@ -3,7 +3,7 @@ export interface QldbQuery<T> {
   filter?: EqualityExpression<T> | string;
 }
 
-export type Query<T> = null;
+export type Query = null;
 export type EqualityExpression<T> = { [K in keyof T]?: EqualityValueSide };
 export type EqualityValueSide = {
   operator: EqualityOperator;
