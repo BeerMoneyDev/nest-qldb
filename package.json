@@ -52,7 +52,7 @@
     "amazon-qldb-driver-nodejs": "^2.2.0",
     "ion-js": "^4.2.1",
     "jsbi": "^3.1.1",
-    "lodash": "^4.17.21"
+    "lodash.chunk": "^4.2.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.1.6",
