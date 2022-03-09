@@ -1,3 +1,5 @@
+## [3.0.1](https://github.com/BeerMoneyDev/nest-qldb/compare/v3.0.0...v3.0.1) (2022-03-09)
+
 # [3.0.0](https://github.com/BeerMoneyDev/nest-qldb/compare/v2.3.0...v3.0.0) (2022-01-12)
 
 # [2.3.0](https://github.com/BeerMoneyDev/nest-qldb/compare/v2.2.1...v2.3.0) (2021-05-05)
