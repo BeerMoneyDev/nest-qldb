@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Result } from 'amazon-qldb-driver-nodejs';
-import { chunk } from 'lodash';
+import * as chunk from 'lodash.chunk';
 import { QldbQuery, getQueryFilter } from './query';
 import { QldbQueryService } from './query.service';
 import { RepositoryOptions } from './types';
