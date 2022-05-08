@@ -158,6 +158,21 @@ export class Repository<T> {
    */
 
   private async createTable(): Promise<number> {
+    const selectTable = await this.queryService.querySingle<{
+      name: string;
+    }>(
+      [
+        `SELECT i.name`,
+        `FROM information_schema.user_tables AS i`,
+        `WHERE i.name = ? AND i.status = ?`,
+      ].join(' '),
+      this.config.tableName,
+      'ACTIVE',
+    );
+    if (selectTable?.name === this.config.tableName) {
+      return 1;
+    }
+
     const result = await this.queryService.execute(
       `CREATE TABLE ${this.config.tableName}`,
     );
@@ -172,7 +187,25 @@ export class Repository<T> {
 
   private async createIndexes(indexFields: string[]) {
     const results: Result[] = [];
-    for (const field of indexFields) {
+
+    const selectIndex = await this.queryService.query<{
+      expr: string;
+      indexId: string;
+      status: string;
+    }>(
+      [
+        `SELECT VALUE indexes`,
+        `FROM information_schema.user_tables AS i, i.indexes AS indexes`,
+        `WHERE i.name = ?`,
+      ].join(' '),
+    );
+
+    const currentIndex = selectIndex.map(val => val.expr);
+    const newIndexFields = indexFields.filter(
+      field => currentIndex.indexOf(field) === -1,
+    );
+
+    for (const field of newIndexFields) {
       try {
         const result = await this.queryService.execute(
           `CREATE INDEX ON ${this.config.tableName} (${field})`,
