@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Result } from 'amazon-qldb-driver-nodejs';
 import * as chunk from 'lodash.chunk';
-import { QldbQuery, getQueryFilter } from './query';
+import { getQueryFilter, QldbQuery } from './query';
 import { QldbQueryService } from './query.service';
 import { RepositoryOptions } from './types';
 
@@ -24,7 +24,11 @@ export class Repository<T> {
    */
   async query(query: QldbQuery<T>): Promise<Array<T & { id: string }>> {
     const fields = !!query.fields
-      ? query.fields.map(x => `tbl.${x}`).join(', ')
+      ? query.fields
+          .map((x) => {
+            return `tbl.${String(x)}`;
+          })
+          .join(', ')
       : 'tbl.*';
 
     const filter = !!query.filter ? getQueryFilter<T>(query.filter) : '1 = 1';
@@ -63,7 +67,7 @@ export class Repository<T> {
   }
 
   async createMany(records: T[]): Promise<(T & { id: string })[]> {
-    const updatedRecords = records.map(record => {
+    const updatedRecords = records.map((record) => {
       if (this.config.useMetadataKey) {
         delete record['id'];
       }

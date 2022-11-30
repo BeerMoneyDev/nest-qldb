@@ -1,10 +1,7 @@
-import { Repository } from './repository';
-import {
-  QldbDriver,
-  RetryConfig,
-  TransactionExecutor,
-} from 'amazon-qldb-driver-nodejs';
+import { QldbDriver, TransactionExecutor } from 'amazon-qldb-driver-nodejs';
+import { RetryConfig } from 'rxjs';
 import { QldbQueryService } from './query.service';
+import { Repository } from './repository';
 
 class TestClass {
   testerName: string;
@@ -23,9 +20,9 @@ describe('Repository', () => {
   >;
 
   beforeEach(async () => {
-    const driver = ({
+    const driver = {
       executeLambda: () => null,
-    } as any) as QldbDriver;
+    } as any as QldbDriver;
 
     executeLambdaSpy = jest.spyOn(driver, 'executeLambda') as any;
     subject = new Repository(new QldbQueryService(driver), {
@@ -222,7 +219,8 @@ describe('Repository', () => {
       ];
       const documentId = '1234';
       const qldbResponse = {
-        getResultList: () => expectedResponse.map(x => ({ ...x, documentId })),
+        getResultList: () =>
+          expectedResponse.map((x) => ({ ...x, documentId })),
       };
       executeLambdaSpy.mockReturnValue(Promise.resolve(qldbResponse));
       const response = await subject.createMany(expectedResponse);
