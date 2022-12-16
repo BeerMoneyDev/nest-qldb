@@ -1,3 +1,11 @@
+## [3.0.2](https://github.com/BeerMoneyDev/nest-qldb/compare/v3.0.1...v3.0.2) (2022-12-16)
+
+
+### Bug Fixes
+
+* circleci/node ver ([73ed2e1](https://github.com/BeerMoneyDev/nest-qldb/commit/73ed2e1ec1c78140c90629437d5fea4eca883afe))
+* docker node update ([ed79237](https://github.com/BeerMoneyDev/nest-qldb/commit/ed7923713e94de9f09dc6a054e32f77a1d530def))
+
 ## [3.0.1](https://github.com/BeerMoneyDev/nest-qldb/compare/v3.0.0...v3.0.1) (2022-03-09)
 
 # [3.0.0](https://github.com/BeerMoneyDev/nest-qldb/compare/v2.3.0...v3.0.0) (2022-01-12)
