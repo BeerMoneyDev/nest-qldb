@@ -44,7 +44,7 @@ export class QldbQueryService {
 
   async execute(statement: string, ...parameters: any[]): Promise<Result> {
     return await this.driver.executeLambda(
-      async txn => await txn.execute(statement, ...parameters),
+      async (txn) => await txn.execute(statement, ...parameters),
     );
   }
 
@@ -59,7 +59,7 @@ export class QldbQueryService {
       return null;
     }
 
-    return resultList.map(value => {
+    return resultList.map((value) => {
       const parsedJson = JSON.parse(JSON.stringify(value));
 
       return subproperty ? parsedJson[subproperty] : parsedJson;

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { QldbQueryService } from './query.service';
 import { QldbDriver } from 'amazon-qldb-driver-nodejs';
+import { QldbQueryService } from './query.service';
 import { QLDB_DRIVER_TOKEN } from './tokens';
 
 describe('QldbQueryService', () => {
@@ -12,9 +12,9 @@ describe('QldbQueryService', () => {
         QldbQueryService,
         {
           provide: QLDB_DRIVER_TOKEN,
-          useValue: ({
+          useValue: {
             executeLambda: () => null,
-          } as any) as QldbDriver,
+          } as any as QldbDriver,
         },
       ],
     }).compile();
