@@ -53,7 +53,7 @@ class UserService {
       // Check if the luckyNumber already exists.
       const results = (
         await txn.execute(
-          `SELECT id FROM app_users AS u BY u.luckyNumber WHERE u.luckyNumber = ?`,
+          `SELECT id FROM app_users AS u WHERE u.luckyNumber = ?`,
           data.luckyNumber,
         )
       ).getResultList();
