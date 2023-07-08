@@ -89,7 +89,7 @@ describe('NestQldbModule.forRoot()', () => {
     `,
       'best_golfers_ever',
     );
-    expect(result.find(r => r.name === 'Billy Madison')).toBeDefined();
+    expect(result.find((r) => r.name === 'Billy Madison')).toBeDefined();
 
     // retrieve
     const get = await userService.usersRepository.retrieve(created.id);
@@ -99,7 +99,7 @@ describe('NestQldbModule.forRoot()', () => {
       fields: ['luckyNumber'],
       filter: { name: { operator: '=', value: name } },
     });
-    expect(queryResult.some(x => x.luckyNumber === luckyNumber)).toBeTruthy();
+    expect(queryResult.some((x) => x.luckyNumber === luckyNumber)).toBeTruthy();
 
     // updates
     user.luckyNumber = 68;

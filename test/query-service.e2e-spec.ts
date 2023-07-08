@@ -7,11 +7,12 @@ import {
 } from '../src';
 import { NestFactory } from '@nestjs/core';
 import { SharedIniFileCredentials } from 'aws-sdk';
+import { TransactionExecutor } from "amazon-qldb-driver-nodejs";
 
 /* USERS */
 @QldbTable({
   tableName: 'app_users',
-  tableIndexes: ['dob', 'sex'],
+  tableIndexes: ['dob', 'sex', 'luckyNumber'],
 })
 class User {
   dob: Date;
@@ -43,6 +44,38 @@ class UserService {
   }
 
   /**
+   * Creates a record using the luckyNumber as unique index.
+   * https://docs.aws.amazon.com/qldb/latest/developerguide/driver-cookbook-nodejs.html#cookbook-nodejs.crud.uniqueness-constraints
+   * @param data The data to be inserted.
+   */
+  async createUniqueLuckyNumber(data: User): Promise<User & { id: string }> {
+    const callback = async (txn: TransactionExecutor) => {
+      // Check if the luckyNumber already exists.
+      const results = (
+        await txn.execute(
+          `SELECT id FROM app_users AS u BY u.luckyNumber WHERE u.luckyNumber = ?`,
+          data.luckyNumber,
+        )
+      ).getResultList();
+
+      if (results.length != 0)
+        throw new Error(`The luckyNumber ${data.luckyNumber} already exists.`);
+
+      return await txn.execute(`INSERT INTO app_users ?`, [data]);
+    };
+    const result = (
+      await this.queryService.queryTransactionally<{ documentId: string }>(
+        callback,
+      )
+    )[0];
+
+    return {
+      ...data,
+      id: result?.documentId,
+    };
+  }
+
+  /**
    * Retrieves a record based on the QLDB id.
    * @param id The QLDB ID of the object.
    */
@@ -52,6 +85,27 @@ class UserService {
       [`SELECT id, u.*`, `FROM app_users AS u`, `BY id WHERE id = ?`].join(' '),
       id,
     );
+  }
+
+  /*
+   * Retrieves a record using them queryTransactionally method.
+   * @param id The QLDB ID of the object.
+   */
+
+  async retrieveTransactionally(id: string): Promise<User & { id: string }> {
+    const callback = async (txn: TransactionExecutor) => {
+      return await txn.execute(
+        [`SELECT id, u.*`, `FROM app_users AS u`, `BY id WHERE id = ?`].join(
+          ' ',
+        ),
+        id,
+      );
+    };
+    return (
+      await this.queryService.queryTransactionally<User & { id: string }>(
+        callback,
+      )
+    )[0];
   }
 }
 /* END USERS */
@@ -84,7 +138,7 @@ describe('NestQldbModule.forRoot()', () => {
 
     const userService = module.get(UserService);
     const name = 'Billy Madison';
-    const luckyNumber = 69;
+    const luckyNumber = 25;
     const user = new User({
       dob: new Date('1980/07/19'),
       name,
@@ -101,5 +155,40 @@ describe('NestQldbModule.forRoot()', () => {
     // retrieve
     const retrieved = await userService.retrieve(created.id);
     expect(retrieved.name).toStrictEqual(name);
+  });
+
+  it('should work with queryTransactionally', async () => {
+    jest.setTimeout(30000);
+
+    const module = await NestFactory.createApplicationContext(TestRootModule);
+
+    const userService = module.get(UserService);
+    const name = 'Billy Madison';
+    // Create a random number, so the test can be run multiple times.
+    const luckyNumber = Math.floor(Math.random() * 1000000);
+    const user = new User({
+      dob: new Date('1989/11/25'),
+      name,
+      gender: 'man',
+      sex: 'M',
+      luckyNumber,
+      groups: [{ name: 'best_golfers_ever' }],
+    });
+
+    // create unique
+    const created = await userService.createUniqueLuckyNumber(user);
+    expect(created.name).toStrictEqual(name);
+    expect(created.luckyNumber).toStrictEqual(luckyNumber);
+    expect(created.id).toBeDefined();
+
+    // Trying to create a second user with the same luckyNumber should fail.
+    await expect(userService.createUniqueLuckyNumber(user)).rejects.toThrow(
+      `The luckyNumber ${luckyNumber} already exists.`,
+    );
+
+    // retrieve transactionally
+    const retrieved = await userService.retrieveTransactionally(created.id);
+    expect(retrieved.name).toStrictEqual(name);
+    expect(retrieved.luckyNumber).toStrictEqual(luckyNumber);
   });
 });
