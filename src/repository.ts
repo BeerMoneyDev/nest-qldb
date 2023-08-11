@@ -148,7 +148,7 @@ export class Repository<T> {
       [
         `SELECT *`,
         `FROM history(${this.config.tableName}) AS h`,
-        `WHERE h.${this.config.useMetadataKey ? 'metadata.' : 'data'}.${
+        `WHERE h.${this.config.useMetadataKey ? 'metadata' : 'data'}.${
           this.config.keyField
         } = ?`,
       ].join(' '),
