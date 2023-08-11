@@ -76,7 +76,7 @@ describe('NestQldbModule.forRoot()', () => {
     `,
       'best_golfers_ever',
     );
-    expect(result.find(r => r.name === 'Billy Madison')).toBeDefined();
+    expect(result.find((r) => r.name === 'Billy Madison')).toBeDefined();
 
     await queryService.execute('DROP TABLE app_users');
   });
@@ -121,7 +121,7 @@ describe('NestQldbModule.forRootAsync()', () => {
     `,
       'best_golfers_ever',
     );
-    expect(result.find(r => r.name === 'Billy Madison')).toBeDefined();
+    expect(result.find((r) => r.name === 'Billy Madison')).toBeDefined();
 
     await queryService.execute('DROP TABLE app_users');
   });

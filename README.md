@@ -164,7 +164,9 @@ The `QldbQueryService` provider exposes simple methods that query and map the ob
 - `querySingle` - Performs a query returning a single row mapped to a plain JSON object.
 - `queryForSubdocument` - Performs a query returning a list of nested documents in rows mapped to a plain JSON object.
 - `querySingleForSubdocument` - Performs a query returning a nested documents in single row mapped to a plain JSON object.
+- `queryTransactionally` - Wraps the `executeLambda` method of the QldbDriver and return a list of rows mapped to a plain JSON object. 
 - `execute` - Performs a query that returns no results. Ideal for inserts, updates, and deletes.
+- `executeLambda` - Wrapper of the `executeLambda` method of the QldbDriver.
 
 ```ts
 import { Injectable } from '@nestjs/common';
