@@ -68,7 +68,7 @@ import { User } from './user.model.ts';
       qldbDriver: {
         useFactory: async (configService: ConfigService) => {
           return new QldbDriver(configService.qldbLedgerName, {
-            credentials: new SharedIniFileCredentials({
+            credentials: fromIni({
               profile: config.qldbProfileName,
             }),
           });

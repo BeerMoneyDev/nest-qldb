@@ -1,14 +1,14 @@
-import { Module, Injectable } from '@nestjs/common';
+import { fromIni } from '@aws-sdk/credential-providers';
+import { Injectable, Module } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import {
-  NestQldbModule,
-  QldbTable,
-  Repository,
   InjectRepository,
+  NestQldbModule,
   QldbDriver,
   QldbQueryService,
+  QldbTable,
+  Repository,
 } from '../src';
-import { NestFactory } from '@nestjs/core';
-import { SharedIniFileCredentials } from 'aws-sdk';
 
 /* USERS */
 @QldbTable({
@@ -43,7 +43,7 @@ class UserService {
     NestQldbModule.forRoot({
       qldbDriver: new QldbDriver('test-ledger', {
         region: 'us-east-1',
-        credentials: new SharedIniFileCredentials({
+        credentials: fromIni({
           profile: 'test-profile',
         }),
       }),
@@ -83,13 +83,13 @@ describe('NestQldbModule.forRoot()', () => {
     const result = await queryService.query<User>(
       `
       SELECT a.*
-      FROM app_users AS a, 
+      FROM app_users AS a,
           a.groups AS m
       WHERE m.name = ?
     `,
       'best_golfers_ever',
     );
-    expect(result.find(r => r.name === 'Billy Madison')).toBeDefined();
+    expect(result.find((r) => r.name === 'Billy Madison')).toBeDefined();
 
     // retrieve
     const get = await userService.usersRepository.retrieve(created.id);
@@ -99,7 +99,7 @@ describe('NestQldbModule.forRoot()', () => {
       fields: ['luckyNumber'],
       filter: { name: { operator: '=', value: name } },
     });
-    expect(queryResult.some(x => x.luckyNumber === luckyNumber)).toBeTruthy();
+    expect(queryResult.some((x) => x.luckyNumber === luckyNumber)).toBeTruthy();
 
     // updates
     user.luckyNumber = 68;
