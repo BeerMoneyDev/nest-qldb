@@ -1,12 +1,12 @@
-import { Module, Injectable } from '@nestjs/common';
+import { fromIni } from '@aws-sdk/credential-providers';
+import { Injectable, Module } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import {
   NestQldbModule,
-  QldbTable,
   QldbDriver,
   QldbQueryService,
+  QldbTable,
 } from '../src';
-import { NestFactory } from '@nestjs/core';
-import { SharedIniFileCredentials } from 'aws-sdk';
 
 /* USERS */
 @QldbTable({
@@ -63,7 +63,7 @@ class UserService {
     NestQldbModule.forRoot({
       qldbDriver: new QldbDriver('test-ledger', {
         region: 'us-east-1',
-        credentials: new SharedIniFileCredentials({
+        credentials: fromIni({
           profile: 'test-profile',
         }),
       }),

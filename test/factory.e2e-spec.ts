@@ -1,6 +1,6 @@
+import { fromIni } from '@aws-sdk/credential-providers';
 import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { SharedIniFileCredentials } from 'aws-sdk';
 import {
   NestQldbModule,
   QldbDriver,
@@ -25,7 +25,7 @@ class User {
 // Setup Module
 const driver = new QldbDriver('test-ledger', {
   region: 'us-east-1',
-  credentials: new SharedIniFileCredentials({
+  credentials: fromIni({
     profile: 'test-profile',
   }),
 });
@@ -76,7 +76,7 @@ describe('NestQldbModule.forRoot()', () => {
     `,
       'best_golfers_ever',
     );
-    expect(result.find(r => r.name === 'Billy Madison')).toBeDefined();
+    expect(result.find((r) => r.name === 'Billy Madison')).toBeDefined();
 
     await queryService.execute('DROP TABLE app_users');
   });
@@ -86,9 +86,8 @@ describe('NestQldbModule.forRootAsync()', () => {
   it('should work', async () => {
     jest.setTimeout(30000);
 
-    const module = await NestFactory.createApplicationContext(
-      TestRootAsyncModule,
-    );
+    const module =
+      await NestFactory.createApplicationContext(TestRootAsyncModule);
     const factoryService = module.get(QldbQueryServiceFactoryService);
     const queryService = factoryService.create(driver);
 
@@ -121,7 +120,7 @@ describe('NestQldbModule.forRootAsync()', () => {
     `,
       'best_golfers_ever',
     );
-    expect(result.find(r => r.name === 'Billy Madison')).toBeDefined();
+    expect(result.find((r) => r.name === 'Billy Madison')).toBeDefined();
 
     await queryService.execute('DROP TABLE app_users');
   });
