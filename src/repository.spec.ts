@@ -179,27 +179,18 @@ describe('Repository', () => {
   });
 
   describe('createTableAndIndexes()', () => {
-    it('should createTableAndIndexes', async () => {
+    it('should create Table And Indexes when table does not exist', async () => {
       const indexes = ['testerName'];
       executeLambdaSpy.mockReturnValue(Promise.resolve());
       await subject.createTableAndIndexes(indexes);
-      expect(executeLambdaSpy).toHaveBeenCalledTimes(2);
+      expect(executeLambdaSpy).toHaveBeenCalledTimes(3);
     });
-    it('should handle table creation failure gracefully', async () => {
+    it('should not create table or indexes when they already exist', async () => {
       const indexes = ['testerName'];
-      executeLambdaSpy.mockReturnValueOnce(
-        Promise.reject(new Error('Cannot make table')),
-      );
-      executeLambdaSpy.mockReturnValueOnce(Promise.resolve());
-      await subject.createTableAndIndexes(indexes);
-      expect(executeLambdaSpy).toHaveBeenCalledTimes(2);
-    });
-    it('should handle index creation failure gracefully', async () => {
-      const indexes = ['testerName'];
-      executeLambdaSpy.mockReturnValueOnce(Promise.resolve());
-      executeLambdaSpy.mockReturnValueOnce(
-        Promise.reject(new Error('Cannot make index')),
-      );
+      executeLambdaSpy
+        .mockReturnValue(Promise.resolve())
+        .mockReturnValueOnce(Promise.resolve({ name: tableName } as any))
+        .mockReturnValueOnce(Promise.resolve([{ expr: 'testerName' }] as any));
       await subject.createTableAndIndexes(indexes);
       expect(executeLambdaSpy).toHaveBeenCalledTimes(2);
     });

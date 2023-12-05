@@ -202,11 +202,12 @@ export class Repository<T> {
         `FROM information_schema.user_tables AS i, i.indexes AS indexes`,
         `WHERE i.name = ?`,
       ].join(' '),
+      this.config.tableName,
     );
 
-    const currentIndex = selectIndex.map(val => val.expr);
+    const currentIndex = selectIndex.map((val) => val.expr);
     const newIndexFields = indexFields.filter(
-      field => currentIndex.indexOf(field) === -1,
+      (field) => currentIndex.indexOf(field) === -1,
     );
 
     for (const field of newIndexFields) {
