@@ -170,9 +170,11 @@
   "peerDependencies": {
     "@aws-sdk/client-qldb": "^3.0.0",
     "@aws-sdk/client-qldb-session": "^3.0.0",
+    "@aws-sdk/node-http-handler": "^3.0.0",
+    "@aws-sdk/smithy-client": "^3.0.0",
     "@nestjs/common": "8 - 10",
     "@nestjs/core": "8 - 10",
-    "amazon-qldb-driver-nodejs": "^3.0.1",
+    "amazon-qldb-driver-nodejs": "3.0.1",
     "ion-js": "^4.3.0",
     "jsbi": "^3.1.1",
     "lodash.chunk": "^4.0.0",

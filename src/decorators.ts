@@ -23,7 +23,7 @@ export function InjectRepository<T>(type: TableType<T>) {
 }
 
 export function QldbTable<T>(options?: TableOptions<T>) {
-  return function(target: TableType<T>) {
+  return function (target: TableType<T>) {
     TableRegistrations.add(target, options);
   };
 }

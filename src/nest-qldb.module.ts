@@ -14,13 +14,12 @@ export class NestQldbModule {
     createTablesAndIndexes?: boolean;
     tables?: Type<any>[];
   }): DynamicModule {
-    const qldbDriver: AsyncProvider<
-      QldbDriver | Promise<QldbDriver>
-    > = moduleOptions?.qldbDriver
-      ? {
-          useValue: moduleOptions.qldbDriver,
-        }
-      : null;
+    const qldbDriver: AsyncProvider<QldbDriver | Promise<QldbDriver>> =
+      moduleOptions?.qldbDriver
+        ? {
+            useValue: moduleOptions.qldbDriver,
+          }
+        : null;
 
     return this.forRootAsync({
       qldbDriver,
@@ -54,7 +53,7 @@ export class NestQldbModule {
     if (moduleOptions?.tables) {
       this.createRepositoryProviders(
         moduleOptions.createTablesAndIndexes,
-      ).forEach(cp => {
+      ).forEach((cp) => {
         module.providers.push(cp);
         module.exports.push(cp.provide);
       });
@@ -71,7 +70,7 @@ export class NestQldbModule {
   ) {
     const imports = (asyncProvider as ImportableFactoryProvider<T>).imports;
     if (imports?.length) {
-      imports.forEach(i => module.imports.push(i));
+      imports.forEach((i) => module.imports.push(i));
     }
     delete (asyncProvider as ImportableFactoryProvider<T>).imports;
 
@@ -88,7 +87,7 @@ export class NestQldbModule {
   private static createRepositoryProviders = (
     createTablesAndIndexes: boolean,
   ): FactoryProvider<Promise<Repository<any>>>[] => {
-    return TableRegistrations.keys().map(key => {
+    return TableRegistrations.keys().map((key) => {
       const registration = TableRegistrations.get(key);
       const tableName = registration?.tableName?.length
         ? registration.tableName
