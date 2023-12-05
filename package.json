@@ -1,6 +1,6 @@
 {
   "name": "nest-qldb",
-  "version": "3.0.6",
+  "version": "3.1.0",
   "description": "NestJS ODM for Quantum Ledger Database QLDB",
   "keywords": [
     "nestjs",

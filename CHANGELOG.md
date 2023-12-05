@@ -1,3 +1,17 @@
+# [3.1.0](https://github.com/BeerMoneyDev/nest-qldb/compare/v3.0.6...v3.1.0) (2023-12-05)
+
+
+### Bug Fixes
+
+* **createTableAndIndexes:** do not try to create table and indexes when already exists ([7facb8d](https://github.com/BeerMoneyDev/nest-qldb/commit/7facb8dcd71157789971b22aed0b5ddfc2e7e751))
+
+
+### Features
+
+* **CreateTable:** Gracefully create tables and indexes only if they do not exist. ([8b5c911](https://github.com/BeerMoneyDev/nest-qldb/commit/8b5c911d17f3ebe446ae71bc587853bd0f9b6dd5))
+* **CreateTable:** Gracefully create tables and indexes only if they do not exist. ([1a0b726](https://github.com/BeerMoneyDev/nest-qldb/commit/1a0b726e866c7988c7cde28b38cf28943779f6f5))
+* **CreateTables:** Only create tables and indexes when necessary. ([8e7334b](https://github.com/BeerMoneyDev/nest-qldb/commit/8e7334ba084ce41c3bea1a6993e7a53903098db1))
+
 ## [3.0.6](https://github.com/BeerMoneyDev/nest-qldb/compare/v3.0.5...v3.0.6) (2023-12-05)
 
 ## [3.0.5](https://github.com/BeerMoneyDev/nest-qldb/compare/v3.0.4...v3.0.5) (2023-12-04)
